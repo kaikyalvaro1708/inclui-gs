@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Esta página é servida em qualquer endereço que não existe, inclusive em subpastas:
+         a base faz os links relativos do cabeçalho e do rodapé apontarem para a raiz. -->
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0F2A47" />
+    <meta name="robots" content="noindex" />
+    <title>Página não encontrada | Inclui+</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script src="assets/js/boot.js"></script>
+    <script type="module" src="assets/js/ui/layout.js"></script>
+  </head>
+  <body data-page="404">
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <header class="site-header" id="site-header" data-surface="dark"></header>
+
+    <main id="conteudo" tabindex="-1">
+      <section class="not-found" data-surface="dark">
+        <h1>Esta página tem uma <span class="highlight">barreira.</span></h1>
+        <p>Não encontramos o endereço que você tentou abrir.</p>
+        <a class="btn btn-primary btn-l" href="index.html"><i data-icon="compass"></i> Voltar ao início</a>
+      </section>
+    </main>
+
+    <footer class="site-footer" id="site-footer" data-surface="dark"></footer>
+  </body>
+</html>

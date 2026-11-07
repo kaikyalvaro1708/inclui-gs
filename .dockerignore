@@ -1,0 +1,4 @@
+# A imagem só precisa de site/ e nginx/. Tudo o mais fica de fora do contexto de build.
+*
+!site/
+!nginx/

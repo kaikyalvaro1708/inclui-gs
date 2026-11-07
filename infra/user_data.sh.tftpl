@@ -1,0 +1,29 @@
+#!/bin/bash
+set -euxo pipefail
+
+# Script de deploy, usado no primeiro boot e depois pelo pipeline via SSM.
+cat > /usr/local/bin/deploy.sh <<'SCRIPT'
+#!/bin/bash
+set -euxo pipefail
+aws ecr get-login-password --region ${regiao} | docker login --username AWS --password-stdin ${registry}
+docker pull ${imagem}
+docker rm -f ${container} 2>/dev/null || true
+# A imagem roda sem root na porta ${porta}; a EC2 expõe na 80.
+docker run -d --name ${container} --restart always -p 80:${porta} \
+  --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
+  ${imagem}
+docker image prune -f
+SCRIPT
+chmod +x /usr/local/bin/deploy.sh
+
+dnf install -y docker
+systemctl enable --now docker
+usermod -aG docker ec2-user
+
+# Na primeira subida a imagem pode ainda não estar no ECR: o pipeline publica logo depois.
+for tentativa in 1 2 3 4 5 6 7 8 9 10; do
+  if /usr/local/bin/deploy.sh; then
+    exit 0
+  fi
+  sleep 30
+done

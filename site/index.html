@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0F2A47" />
+    <meta name="description" content="Inclui+ mostra se um lugar funciona para a sua necessidade: nota separada para mobilidade, visão, audição e cognição, verificação por foto e um assistente em linguagem natural." />
+    <title>Acessibilidade verificada | Inclui+</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script src="assets/js/boot.js"></script>
+    <script type="module" src="assets/js/pages/inicio.js"></script>
+  </head>
+  <body data-page="inicio">
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <header class="site-header" id="site-header" data-surface="dark"></header>
+
+    <main id="conteudo" tabindex="-1">
+      <section class="hero" data-surface="dark" aria-labelledby="hero-title">
+        <div class="container hero-grid">
+          <div>
+            <h1 id="hero-title">Saiba se o lugar funciona <span class="highlight nowrap">para você</span>, antes de sair de casa.</h1>
+            <p class="lead">Uma nota separada para mobilidade, visão, audição e cognição, porque “acessível” não diz muita coisa.</p>
+            <div class="actions">
+              <a class="btn btn-primary btn-l" href="mapa.html"><i data-icon="compass"></i> Explorar o mapa</a>
+              <button type="button" class="btn btn-secondary btn-l" id="open-concierge"><i data-icon="message-circle"></i> Falar com o assistente</button>
+            </div>
+          </div>
+          <div class="card demo-card" data-surface="light">
+            <h2>Para qual necessidade você está buscando?</h2>
+            <p class="demo-hint">Troque a opção e veja o ranking mudar. Locais fictícios.</p>
+            <div id="demo-picker"></div>
+            <ol class="rank-list" id="demo-rank" aria-live="polite"></ol>
+            <a class="text-link" id="demo-link" href="mapa.html" style="margin-top: 0.5rem">Ver todos no mapa <i data-icon="arrow-right" data-size="16"></i></a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-white" aria-labelledby="problema-title">
+        <div class="container">
+          <div class="problem-grid">
+            <header class="section-head">
+              <p class="eyebrow">O problema</p>
+              <h2 id="problema-title">Um selo de “acessível” não conta a história toda.</h2>
+              <p class="lead">Um local ótimo para quem usa cadeira de rodas pode ser difícil para uma pessoa autista. Quem depende da informação só descobre isso na porta.</p>
+            </header>
+            <div class="card score-card">
+              <h3 id="example-name"></h3>
+              <div id="example-scores"></div>
+              <p>O mesmo local, quatro respostas. Exemplo fictício.</p>
+            </div>
+          </div>
+          <dl class="stats">
+            <div>
+              <dt>14,4 milhões</dt>
+              <dd>de pessoas com deficiência no Brasil, 7,3% da população com 2 anos ou mais.</dd>
+            </div>
+            <div>
+              <dt>7,9 milhões</dt>
+              <dd>têm dificuldade para enxergar. Rampa não resolve tudo.</dd>
+            </div>
+            <div>
+              <dt>29,2% × 66,4%</dt>
+              <dd>é a participação no mercado de trabalho de quem tem e de quem não tem deficiência.</dd>
+            </div>
+          </dl>
+          <p class="source">
+            Fontes: IBGE,
+            <a href="https://agenciadenoticias.ibge.gov.br/agencia-noticias/2012-agencia-de-noticias/noticias/43463-censo-2022-brasil-tem-14-4-milhoes-de-pessoas-com-deficiencia" target="_blank" rel="noreferrer">Censo 2022, resultados preliminares da amostra</a>
+            e
+            <a href="https://agenciadenoticias.ibge.gov.br/agencia-noticias/2012-agencia-de-noticias/noticias/37317-pessoas-com-deficiencia-tem-menor-acesso-a-educacao-ao-trabalho-e-a-renda" target="_blank" rel="noreferrer">PNAD Contínua 2022</a>.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="diferenciais" aria-labelledby="diferenciais-title">
+        <div class="container">
+          <header class="section-head">
+            <p class="eyebrow">Nossos diferenciais</p>
+            <h2 id="diferenciais-title">Não é só mais um mapa.</h2>
+          </header>
+          <ul class="diff-grid">
+            <li>
+              <i data-icon="scan-search" data-size="28"></i>
+              <h3>Evidência, não autodeclaração</h3>
+              <p>Fotos do local sustentam a nota, em vez de só a palavra de quem é avaliado.</p>
+            </li>
+            <li>
+              <i data-icon="scale" data-size="28"></i>
+              <h3>Uma nota por necessidade</h3>
+              <p>Cada recurso conta para quem precisa dele. Você vê a sua nota e o que falta no local.</p>
+            </li>
+            <li>
+              <i data-icon="message-circle" data-size="28"></i>
+              <h3>Pergunte do seu jeito</h3>
+              <p>Diga aonde quer ir e do que precisa, sem configurar nenhum filtro.</p>
+            </li>
+          </ul>
+          <a class="text-link" href="sobre.html" style="margin-top: 2.5rem">O que já funciona e o que vem depois <i data-icon="arrow-right" data-size="16"></i></a>
+        </div>
+      </section>
+
+      <section class="section section-white" aria-labelledby="cta-title">
+        <div class="container cta-row">
+          <h2 id="cta-title">Vamos deixar a cidade mais fácil de usar?</h2>
+          <div class="actions">
+            <a class="btn btn-primary btn-l" href="cadastro.html">Criar conta grátis</a>
+            <a class="btn btn-secondary btn-l" href="empresas.html">Sou uma empresa</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer" id="site-footer" data-surface="dark"></footer>
+    <noscript><p class="container">Algumas partes do Inclui+, como o mapa e o assistente, precisam de JavaScript.</p></noscript>
+  </body>
+</html>

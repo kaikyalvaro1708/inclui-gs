@@ -1,0 +1,13 @@
+# Normaliza tudo para LF no repositório
+* text=auto eol=lf
+
+# Scripts executados em Linux NUNCA podem ter CRLF:
+# o shebang viraria "#!/bin/bash\r" e o boot da EC2 falharia.
+*.sh        text eol=lf
+*.tftpl     text eol=lf
+*.conf      text eol=lf
+Dockerfile  text eol=lf
+
+# Binários
+*.png   binary
+*.woff2 binary

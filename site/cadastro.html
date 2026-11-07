@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0F2A47" />
+    <meta name="description" content="Crie sua conta no Inclui+, para você ou para a sua empresa." />
+    <title>Criar conta | Inclui+</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script src="assets/js/boot.js"></script>
+    <script type="module" src="assets/js/pages/cadastro.js"></script>
+  </head>
+  <body data-page="cadastro">
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <header class="site-header" id="site-header" data-surface="dark"></header>
+
+    <main id="conteudo" tabindex="-1">
+      <div class="auth">
+        <div class="auth-aside" data-surface="dark">
+          <div data-role="client">
+            <h2>Sua cidade, do <span class="highlight">seu jeito.</span></h2>
+            <ul>
+              <li><i data-icon="check" data-size="18"></i> Notas pela necessidade que importa para você</li>
+              <li><i data-icon="check" data-size="18"></i> Conte só o que quiser: a necessidade é opcional</li>
+              <li><i data-icon="check" data-size="18"></i> Exporte ou apague seus dados quando quiser</li>
+            </ul>
+          </div>
+          <div data-role="partner" hidden>
+            <h2>Seu negócio aberto <span class="highlight">para todas as pessoas.</span></h2>
+            <ul>
+              <li><i data-icon="check" data-size="18"></i> Veja o que falta para cada necessidade</li>
+              <li><i data-icon="check" data-size="18"></i> Plano Básico grátis para começar</li>
+              <li><i data-icon="check" data-size="18"></i> A nota do local não está à venda</li>
+            </ul>
+          </div>
+        </div>
+        <div class="auth-form-side">
+          <div class="auth-box">
+            <h1>Criar conta</h1>
+            <p class="auth-lead">Leva menos de um minuto.</p>
+            <div class="role-tabs" role="group" aria-label="Tipo de conta">
+              <button type="button" class="role-tab" data-set-role="client" aria-pressed="true"><i data-icon="user-round" data-size="18"></i> Para mim</button>
+              <button type="button" class="role-tab" data-set-role="partner" aria-pressed="false"><i data-icon="building-2" data-size="18"></i> Para empresa</button>
+            </div>
+            <form class="form-stack" id="register-form" novalidate>
+              <div id="form-alert"></div>
+              <div class="field" data-role="partner" hidden>
+                <label for="companyName">Nome da empresa</label>
+                <input class="control" id="companyName" autocomplete="organization" />
+              </div>
+              <div class="field" data-role="partner" hidden>
+                <label for="cnpj">CNPJ</label>
+                <input class="control" id="cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" />
+              </div>
+              <div class="field">
+                <label for="name" id="name-label">Nome</label>
+                <input class="control" id="name" autocomplete="name" />
+              </div>
+              <div class="field">
+                <label for="email">E-mail</label>
+                <input class="control" id="email" type="email" autocomplete="email" />
+              </div>
+              <div class="field">
+                <label for="password">Senha</label>
+                <div class="password-wrap">
+                  <input class="control" id="password" type="password" autocomplete="new-password" aria-describedby="password-hint" />
+                  <button type="button" class="password-toggle" data-password-toggle></button>
+                </div>
+                <p class="field-hint" id="password-hint">Pelo menos 8 caracteres.</p>
+              </div>
+              <div class="field" data-role="client">
+                <label for="city">Cidade (opcional)</label>
+                <input class="control" id="city" autocomplete="address-level2" />
+              </div>
+              <div class="field" data-role="client">
+                <label for="need">Necessidade principal (opcional)</label>
+                <select class="control" id="need" aria-describedby="need-hint"></select>
+                <p class="field-hint" id="need-hint">É um dado sensível: usamos só para ordenar os resultados para você.</p>
+              </div>
+              <div class="field" data-role="partner" hidden>
+                <label for="category">Categoria do negócio</label>
+                <select class="control" id="category"></select>
+              </div>
+              <div class="field" data-role="partner" hidden>
+                <label for="plan">Plano</label>
+                <select class="control" id="plan"></select>
+              </div>
+              <div class="field">
+                <label class="check-row">
+                  <input type="checkbox" id="consent" />
+                  <span>Concordo em guardar estes dados neste navegador para usar o Inclui+. Eles não são enviados a nenhum servidor.</span>
+                </label>
+              </div>
+              <button type="submit" class="btn btn-primary btn-l btn-block" id="submit">Criar conta</button>
+            </form>
+            <p class="auth-foot">Já tem conta? <a href="entrar.html">Entrar</a></p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

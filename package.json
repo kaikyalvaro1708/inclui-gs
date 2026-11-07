@@ -1,0 +1,14 @@
+{
+  "name": "inclui-plus",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Inclui+ — CitizenTech de acessibilidade verificada por necessidade. Site estático em HTML, CSS e JavaScript, sem build.",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

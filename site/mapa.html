@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0F2A47" />
+    <meta name="description" content="Mapa de locais com nota de acessibilidade por necessidade: mobilidade, visão, audição e cognição." />
+    <title>Mapa de locais | Inclui+</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <script src="assets/js/boot.js"></script>
+    <!-- Leaflet 1.9.4, copiado para o projeto (licença BSD-2). defer mantém a ordem: ele
+         roda antes do módulo da página, que usa a variável global L. -->
+    <script src="assets/vendor/leaflet/leaflet.js" defer></script>
+    <script type="module" src="assets/js/pages/mapa.js"></script>
+  </head>
+  <body data-page="mapa">
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <header class="site-header" id="site-header" data-surface="dark"></header>
+
+    <main id="conteudo" tabindex="-1">
+      <div class="map-layout" id="map-layout" data-view="list">
+        <aside class="map-sidebar" aria-label="Busca e resultados">
+          <div class="map-controls">
+            <h1>Encontre um lugar</h1>
+            <div>
+              <div class="search-wrap">
+                <i data-icon="search" data-size="18"></i>
+                <input type="search" id="query" aria-label="O que você procura?" placeholder="Ex.: cinema com Libras em Pinheiros" autocomplete="off" />
+              </div>
+              <p class="understood" id="understood" role="status"></p>
+            </div>
+            <div>
+              <p class="field-label">Para quem é esta busca? <small>Pode marcar mais de uma.</small></p>
+              <div id="need-picker"></div>
+            </div>
+            <div>
+              <p class="field-label">O que você quer fazer?</p>
+              <div class="chips" id="kind-chips" role="group" aria-label="Tipo de lugar"></div>
+            </div>
+            <div>
+              <p class="field-label">O que não pode faltar?</p>
+              <div class="chips" id="quick-chips" role="group" aria-label="Filtros rápidos"></div>
+            </div>
+            <details class="filter-details">
+              <summary><i data-icon="sliders-horizontal" data-size="17"></i> <span id="filter-summary">Todos os filtros</span> <i data-icon="chevron-down" data-size="18"></i></summary>
+              <div class="filter-body" id="filter-body"></div>
+            </details>
+          </div>
+
+          <div class="results-head">
+            <span role="status" id="result-count"></span>
+            <span class="results-head-actions">
+              <button type="button" class="text-button" id="clear-filters" hidden>Limpar filtros</button>
+              <button type="button" class="text-button" id="near-me" aria-pressed="false"><i data-icon="locate-fixed" data-size="15"></i> Perto de mim</button>
+            </span>
+          </div>
+          <p class="location-note" id="location-note" role="status"></p>
+          <div id="results"></div>
+          <p class="map-notice"><i data-icon="info" data-size="14"></i> Demonstração: locais, notas, relatos e descontos são fictícios.</p>
+        </aside>
+
+        <div class="map-pane">
+          <p class="map-tag" id="map-tag"></p>
+          <div id="map"><p class="map-loading" role="status">Carregando o mapa…</p></div>
+        </div>
+
+        <div id="place-card-root"></div>
+
+        <div class="view-switch" role="group" aria-label="Forma de visualização">
+          <button type="button" class="view-button" data-view="list" aria-pressed="true"><i data-icon="list" data-size="18"></i> Lista</button>
+          <button type="button" class="view-button" data-view="map" aria-pressed="false"><i data-icon="map" data-size="18"></i> Mapa</button>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
