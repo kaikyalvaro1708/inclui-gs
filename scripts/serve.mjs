@@ -22,8 +22,10 @@ const TYPES = {
 
 function fileFor(urlPath) {
   const decoded = decodeURIComponent(urlPath.split('?')[0]);
+  // O caminho vem da URL, mas a linha seguinte recusa qualquer coisa fora de site/ ("../").
+  // Servidor só de desenvolvimento, na máquina de quem roda `npm start`.
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
   const target = normalize(join(ROOT, decoded));
-  // Impede sair da pasta site/ com "../".
   if (target !== ROOT && !target.startsWith(ROOT + sep)) return null;
   try {
     const stats = statSync(target);

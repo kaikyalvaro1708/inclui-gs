@@ -3,7 +3,7 @@
 
 # Variante "unprivileged" da imagem oficial do nginx: já vem preparada para rodar sem
 # root, ouvindo na porta 8080. A versão fica fixada para o build ser reproduzível.
-FROM nginxinc/nginx-unprivileged:1.28-alpine
+FROM nginxinc/nginx-unprivileged:1.30-alpine
 
 LABEL org.opencontainers.image.title="Inclui+" \
       org.opencontainers.image.description="Acessibilidade verificada por necessidade - FIAP Global Solution 2026.2"

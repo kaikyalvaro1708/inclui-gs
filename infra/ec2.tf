@@ -2,10 +2,6 @@ data "aws_ssm_parameter" "al2023" {
   name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
 }
 
-locals {
-  imagem_ecr = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
-}
-
 resource "aws_instance" "site" {
   ami                    = data.aws_ssm_parameter.al2023.value
   instance_type          = var.instance_type
@@ -15,11 +11,11 @@ resource "aws_instance" "site" {
 
   user_data_replace_on_change = true
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    regiao    = var.aws_region
-    registry  = "${data.aws_caller_identity.atual.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
-    imagem    = local.imagem_ecr
-    container = var.container_name
-    porta     = var.container_port
+    regiao      = var.aws_region
+    registry    = "${data.aws_caller_identity.atual.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+    repositorio = aws_ecr_repository.app.repository_url
+    container   = var.container_name
+    porta       = var.container_port
   })
 
   # IMDSv2 obrigatorio: protege as credenciais da role contra SSRF.
