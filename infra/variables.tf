@@ -53,8 +53,3 @@ variable "container_port" {
 }
 
 
-variable "habilitar_cloudfront" {
-  description = "Cria o CloudFront na frente da EC2. Sem ele o site fica so em HTTP e o login nao funciona (crypto.subtle exige HTTPS)."
-  type        = bool
-  default     = true
-}

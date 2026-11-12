@@ -158,7 +158,6 @@ jobs:
 
       # Os assets ficam até 1 hora no cache do CloudFront: limpa para o deploy valer já.
       - name: Limpa o cache do CloudFront
-        if: env.CLOUDFRONT_ID != ''
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "$CLOUDFRONT_ID" \

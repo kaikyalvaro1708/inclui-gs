@@ -10,8 +10,6 @@ data "aws_cloudfront_cache_policy" "otimizado" {
 }
 
 resource "aws_cloudfront_distribution" "site" {
-  count = var.habilitar_cloudfront ? 1 : 0
-
   enabled             = true
   comment             = "${local.nome} - site do Inclui+"
   default_root_object = "index.html"

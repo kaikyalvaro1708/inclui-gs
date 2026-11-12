@@ -166,12 +166,12 @@ Preços on-demand da AWS em `us-east-1`, com 730 horas por mês:
 |---|---|---|
 | EC2 `t3.micro` | 730 h × US$ 0,0104 | 7,59 |
 | IP público IPv4 | 730 h × US$ 0,005 | 3,65 |
-| Disco EBS gp3 de 10 GB | 10 GB × US$ 0,08 | 0,80 |
+| Disco EBS gp3 de 8 GB (padrão) | 8 GB × US$ 0,08 | 0,64 |
 | ECR | Menos de 0,1 GB de imagens × US$ 0,10 | 0,01 |
 | CloudFront | Dentro do nível gratuito permanente (1 TB e 10 milhões de requisições por mês) | 0,00 |
 | S3 do estado do Terraform | Alguns KB | 0,01 |
 | SSM e transferência da EC2 para o CloudFront | Sem custo | 0,00 |
-| **Total** | | **≈ 12,06** |
+| **Total** | | **≈ 11,90** |
 
 Isso dá cerca de US$ 0,40 por dia. Com o nível gratuito da AWS ou os créditos do AWS Academy, o custo é zero. O GitHub Actions é gratuito em repositório público, e a observabilidade roda na máquina local, sem custo. Depois da avaliação, destrua tudo (veja abaixo).
 

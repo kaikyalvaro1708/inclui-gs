@@ -25,9 +25,7 @@ resource "aws_instance" "site" {
   }
 
   root_block_device {
-    volume_size = 10
-    volume_type = "gp3"
-    encrypted   = true
+    encrypted = true
   }
 
   tags = { Name = "${local.nome}-ec2" }
