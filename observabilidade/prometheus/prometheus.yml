@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alertas.yml
+
+scrape_configs:
+  # Tráfego e saturação: requisições e conexões do nginx do container local.
+  - job_name: nginx
+    static_configs:
+      - targets: ["nginx-exporter:9113"]
+        labels:
+          ambiente: local
+
+  # Latência e erros: o Blackbox acessa o site como um visitante faria.
+  # Os alvos ficam em alvos.yml, que o Prometheus relê sozinho a cada 30 segundos.
+  - job_name: disponibilidade
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    file_sd_configs:
+      - files: [/etc/prometheus/alvos.yml]
+        refresh_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115

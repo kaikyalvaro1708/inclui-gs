@@ -1,0 +1,11 @@
+# Endereços que o Blackbox monitora.
+# Depois do primeiro deploy, troque a URL do CloudFront pela que aparece no resumo
+# da execução do pipeline (ou em `terraform output url_do_site`). Não precisa reiniciar nada.
+
+- targets: ["http://site:8080/healthz"]
+  labels:
+    ambiente: local
+
+- targets: ["https://SEU-ID.cloudfront.net/healthz"]
+  labels:
+    ambiente: publicado

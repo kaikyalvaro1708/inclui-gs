@@ -1,0 +1,80 @@
+# Inclui+ local: o site (mesma imagem da EC2) e a stack de observabilidade.
+#
+#   docker compose up -d --build
+#
+#   Site        http://localhost:8080
+#   Grafana     http://localhost:3000   (dashboard "Inclui+ - Golden Signals")
+#   Prometheus  http://localhost:9090   (aba Alerts mostra os alertas)
+#
+# Todas as portas ficam presas em 127.0.0.1: nada disto é acessível de fora da máquina.
+
+services:
+  site:
+    build: .
+    image: inclui-plus:local
+    ports:
+      - "127.0.0.1:8080:8080"
+    # As mesmas travas usadas na EC2.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # Lê o stub_status do nginx (porta 8081, interna) e entrega em formato Prometheus.
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.4.2
+    command:
+      - --nginx.scrape-uri=http://site:8081/nginx_status
+    depends_on:
+      - site
+    restart: unless-stopped
+
+  # Faz requisições HTTP no site local e no publicado na AWS e mede tempo e status.
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - ./observabilidade/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./observabilidade/prometheus:/etc/prometheus:ro
+      - prometheus-dados:/prometheus
+    depends_on:
+      - nginx-exporter
+      - blackbox
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      # Dashboard aberto para leitura sem login. Para editar, entre como admin:
+      # o Grafana pede para trocar a senha padrão no primeiro acesso.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/inclui-golden-signals.json
+    volumes:
+      - ./observabilidade/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observabilidade/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-dados:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-dados:
+  grafana-dados:

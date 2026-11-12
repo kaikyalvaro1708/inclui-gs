@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <filter id="suave" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+    <linearGradient id="arco" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#1b56ad" stop-opacity="0.75"/>
+      <stop offset="0.6" stop-color="#16478f" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#123a73" stop-opacity="0.2"/>
+    </linearGradient>
+    <radialGradient id="brilho" cx="0.15" cy="1.05" r="0.7">
+      <stop offset="0" stop-color="#1f6fd6" stop-opacity="0.65"/>
+      <stop offset="0.5" stop-color="#1650a6" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#0f2a47" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#0f2a47"/>
+
+  <g filter="url(#suave)">
+    <!-- Faixa larga em arco, do alto ao meio para baixo, passando por trás do cartão -->
+    <circle cx="1700" cy="1000" r="1080" fill="url(#arco)"/>
+    <circle cx="1760" cy="1060" r="920" fill="#0f2a47" opacity="0.9"/>
+    <!-- Segunda faixa, mais fina e mais escura, por dentro da primeira -->
+    <circle cx="1800" cy="1100" r="800" fill="#14396b" opacity="0.6"/>
+    <circle cx="1850" cy="1140" r="680" fill="#0f2a47" opacity="0.85"/>
+
+    <!-- Faixa curva no canto inferior esquerdo -->
+    <ellipse cx="420" cy="1160" rx="1150" ry="300" fill="#1a5bb8" opacity="0.45"/>
+    <ellipse cx="360" cy="1230" rx="1080" ry="290" fill="#0f2a47" opacity="0.6"/>
+  </g>
+
+  <rect width="1600" height="1000" fill="url(#brilho)"/>
+</svg>

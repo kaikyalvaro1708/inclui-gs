@@ -442,17 +442,8 @@ main:focus-visible { outline: none; }
 }
 .nav-bar { display: flex; align-items: center; gap: 1.5rem; min-height: var(--nav-height); }
 .brand { text-decoration: none; color: var(--on-ink); border-radius: 8px; }
-.logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.625rem;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.375rem;
-  letter-spacing: -0.03em;
-  color: inherit;
-}
-.logo-mark { width: 2rem; height: 2rem; flex: none; }
+.brand { display: inline-flex; align-items: center; flex: none; }
+.logo { display: block; height: 2.25rem; width: auto; }
 .nav-links { display: flex; align-items: center; gap: 0.25rem; margin-left: 0.5rem; }
 .nav-link {
   display: inline-flex;
@@ -952,7 +943,12 @@ main:focus-visible { outline: none; }
 
 /* ---------- Início ---------- */
 
-.hero { background: var(--ink); padding: clamp(3rem, 7vw, 5.5rem) 0; }
+.hero {
+  background: var(--ink) url("../img/hero-fundo.svg") center / cover no-repeat;
+  padding: clamp(3rem, 7vw, 5.5rem) 0;
+}
+/* Alto contraste: fundo liso, sem os arcos. */
+:root[data-contrast='high'] .hero { background-image: none; }
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);

@@ -16,17 +16,9 @@ import { hydrateIcons, icon } from './icons.js';
 const page = document.body.dataset.page;
 const user = currentUser();
 
-export function logoMark() {
-  return html`<svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-    <rect width="32" height="32" rx="9" fill="var(--brand)" />
-    <circle cx="11" cy="9.5" r="2.5" fill="var(--on-brand)" />
-    <rect x="8.75" y="14" width="4.5" height="10.5" rx="2.25" fill="var(--on-brand)" />
-    <rect x="19.75" y="10" width="3.5" height="11" rx="1.75" fill="var(--on-brand)" />
-    <rect x="16" y="13.75" width="11" height="3.5" rx="1.75" fill="var(--on-brand)" />
-  </svg>`;
-}
-
-const logo = () => html`<span class="logo">${logoMark()}<span>Inclui+</span></span>`;
+// Logo com fundo transparente e letras brancas: só funciona sobre o azul-marinho
+// do cabeçalho e do rodapé.
+const logo = () => html`<img class="logo" src="assets/img/logo-inclui.png" width="441" height="120" alt="Inclui+" />`;
 
 /* ---------- Cabeçalho ---------- */
 

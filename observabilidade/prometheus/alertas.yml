@@ -1,0 +1,20 @@
+groups:
+  - name: inclui-plus
+    rules:
+      - alert: SiteFora
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severidade: critica
+        annotations:
+          resumo: "Inclui+ fora do ar ({{ $labels.ambiente }})"
+          descricao: "{{ $labels.instance }} não responde com 200 há mais de 1 minuto."
+
+      - alert: LatenciaAlta
+        expr: probe_duration_seconds > 1
+        for: 2m
+        labels:
+          severidade: aviso
+        annotations:
+          resumo: "Inclui+ lento ({{ $labels.ambiente }})"
+          descricao: "{{ $labels.instance }} leva mais de 1 segundo para responder há 2 minutos."
