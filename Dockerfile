@@ -8,6 +8,11 @@ FROM nginxinc/nginx-unprivileged:1.30-alpine
 LABEL org.opencontainers.image.title="Inclui+" \
       org.opencontainers.image.description="Acessibilidade verificada por necessidade - FIAP Global Solution 2026.2"
 
+# Aplica as correções de segurança publicadas pelo Alpine depois da imagem base
+# (o Trivy barra CVE crítico com correção disponível).
+USER root
+RUN apk upgrade --no-cache
+
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --chown=nginx:nginx site/ /usr/share/nginx/html/
 

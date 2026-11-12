@@ -10,6 +10,10 @@ data "aws_availability_zones" "disponiveis" {
   state = "available"
 }
 
+# Pública por necessidade: a EC2 é a origem do CloudFront e precisa de internet para puxar
+# a imagem do ECR e falar com o SSM. Sem NAT Gateway, que custaria mais que a própria EC2.
+# O acesso é controlado pelo security group, que só libera a porta 80.
+# nosemgrep: terraform.aws.security.aws-subnet-has-public-ip-address.aws-subnet-has-public-ip-address
 resource "aws_subnet" "publica" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.subnet_cidr

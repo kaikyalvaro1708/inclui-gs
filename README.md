@@ -79,13 +79,12 @@ Os segredos ficam em **Settings → Secrets and variables → Actions**, nunca n
 | `AWS_ACCESS_KEY_ID` | Credencial da AWS |
 | `AWS_SECRET_ACCESS_KEY` | Credencial da AWS |
 | `AWS_SESSION_TOKEN` | Só para credenciais temporárias, como as do AWS Academy |
-| `AWS_REGION` | `us-east-1` |
 
 ### Execução barrada e execução corrigida
 
 Para demonstrar o bloqueio, numa branch de teste:
 
-1. Apague a linha `USER nginx` do `Dockerfile`. O Semgrep acusa o Dockerfile sem usuário definido, e o Security Pipeline fica vermelho, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
+1. Apague a última linha `USER nginx` do `Dockerfile`. O container passa a rodar como root, o Semgrep acusa, e o Security Pipeline fica vermelho, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
 2. Tire o print da execução vermelha.
 3. Desfaça a alteração e faça push. O Security Pipeline fica verde e, na `main`, o CD roda. Tire o segundo print.
 

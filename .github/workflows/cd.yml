@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_REGION: us-east-1
   TF_STATE_KEY: inclui-gs/terraform.tfstate
 
 jobs:
@@ -25,16 +25,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          # O mesmo commit que passou nas varreduras de segurança.
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Define a tag da imagem
         run: echo "IMAGE_TAG=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Configura credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -69,7 +66,7 @@ jobs:
           fi
 
       - name: Setup do Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_version: 1.13.4
           terraform_wrapper: false
@@ -97,7 +94,7 @@ jobs:
           echo "CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id)" >> "$GITHUB_ENV"
 
       - name: Login no Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
 
       # As tags do ECR são imutáveis: cada imagem leva o SHA do commit.
       # Se o deploy for repetido para o mesmo commit, a imagem já existe e o push é pulado.
