@@ -1,10 +1,10 @@
 name: Deploy do Inclui+ na AWS
 
-# Só publica depois que a Segurança do Inclui+ (Gitleaks, Semgrep e Trivy) passar na main.
+# Só publica depois que o Security Scan (Gitleaks, Semgrep e Trivy) passar na main.
 # Se alguma varredura falhar, o deploy não acontece.
 on:
   workflow_run:
-    workflows: ["Segurança do Inclui+"]
+    workflows: [Security Scan]
     types: [completed]
     branches: [main]
   workflow_dispatch:

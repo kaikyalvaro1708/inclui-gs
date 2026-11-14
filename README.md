@@ -68,7 +68,7 @@ São três workflows em [`.github/workflows/`](.github/workflows/):
 |---|---|---|
 | [`ci.yml`](.github/workflows/ci.yml) | Push fora da `main` e pull request | Build da imagem |
 | [`security.yml`](.github/workflows/security.yml) | Todo push | **Gitleaks** procura segredos em todo o histórico do git; **Semgrep** faz a análise estática do código; **Trivy** barra a imagem com CVE crítico que já tem correção |
-| [`cd.yml`](.github/workflows/cd.yml) | Quando a "Segurança do Inclui+" passa na `main` | `terraform apply`, push da imagem no ECR com o SHA do commit, deploy na EC2 via SSM, limpeza do cache do CloudFront e checagem da URL pública |
+| [`cd.yml`](.github/workflows/cd.yml) | Quando o "Security Scan" passa na `main` | `terraform apply`, push da imagem no ECR com o SHA do commit, deploy na EC2 via SSM, limpeza do cache do CloudFront e checagem da URL pública |
 
 Se o Gitleaks, o Semgrep ou o Trivy falhar, o deploy não roda: nada vai para o ar.
 
@@ -84,9 +84,9 @@ Os segredos ficam em **Settings → Secrets and variables → Actions**, nunca n
 
 Para demonstrar o bloqueio, numa branch de teste:
 
-1. Apague a última linha `USER nginx` do `Dockerfile`. O container passa a rodar como root, o Semgrep acusa, e a "Segurança do Inclui+" fica vermelha, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
+1. Apague a última linha `USER nginx` do `Dockerfile`. O container passa a rodar como root, o Semgrep acusa, e o "Security Scan" fica vermelho, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
 2. Tire o print da execução vermelha.
-3. Desfaça a alteração e faça push. A "Segurança do Inclui+" fica verde e, na `main`, o "Deploy do Inclui+ na AWS" roda. Tire o segundo print.
+3. Desfaça a alteração e faça push. O "Security Scan" fica verde e, na `main`, o "Deploy do Inclui+ na AWS" roda. Tire o segundo print.
 
 ## Observabilidade
 
@@ -200,7 +200,7 @@ docker compose down           # para tudo
 ### 3. Publicar na AWS
 
 1. Cadastre os segredos da tabela da [Esteira CI/CD](#esteira-cicd) no GitHub.
-2. Faça push na `main`. Depois da "Segurança do Inclui+", o deploy cria o bucket de estado, aplica o Terraform, publica a imagem e faz o deploy.
+2. Faça push na `main`. Depois do "Security Scan", o deploy cria o bucket de estado, aplica o Terraform, publica a imagem e faz o deploy.
 3. A URL aparece no resumo da execução, em **Actions → Deploy do Inclui+ na AWS**. Na primeira vez, o CloudFront leva de 5 a 10 minutos para ficar pronto.
 
 Para rodar o Terraform na sua máquina, copie `infra/terraform.tfvars.example` para `infra/terraform.tfvars` (esse arquivo fica fora do git).
