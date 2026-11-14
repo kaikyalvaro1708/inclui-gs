@@ -19,7 +19,7 @@ Projeto da Global Solution FIAP 2026.2. **Os locais, as notas e os descontos sã
 | Nuvem | AWS, região `us-east-2` |
 | Infraestrutura | Terraform: VPC, sub-rede pública, internet gateway, security group, IAM role, ECR, EC2 `t3.micro` e CloudFront |
 | Estado do Terraform | Bucket S3 privado, versionado e criptografado (fora do repositório) |
-| Esteira CI/CD | GitHub Actions: `ci.yml` (build), `security.yml` (Gitleaks, Semgrep e Trivy a cada push) e `cd.yml` (deploy automático na `main`) |
+| Esteira CI/CD | GitHub Actions: [`ci.yml`](.github/workflows/ci.yml) (build, Gitleaks, Semgrep e Trivy) e [`cd.yml`](.github/workflows/cd.yml) (deploy na `main`) |
 | Observabilidade | Prometheus, Blackbox Exporter, nginx exporter e Grafana via `docker compose` |
 | Custo estimado | Cerca de US$ 12 por mês com a infraestrutura ligada ([detalhes](#estimativa-de-custo)) |
 
@@ -35,14 +35,13 @@ flowchart LR
         ECR[(Amazon ECR)] -. pull via IAM role .-> EC2
         S3[(S3<br/>estado do Terraform)]
     end
-    subgraph "GitHub Actions - esteira CI/CD"
-        CI[ci.yml<br/>Build]
-        subgraph security.yml
+    subgraph "GitHub Actions"
+        subgraph "ci.yml - pull request"
+            B[Build] --> T[Trivy]
             GL[Gitleaks]
             SG2[Semgrep]
-            T[Trivy]
         end
-        GL & SG2 & T -- passou na main --> D[cd.yml<br/>Deploy]
+        GL & SG2 & T -- merge na main --> D[cd.yml<br/>Deploy]
     end
     D -- terraform apply --> S3
     D -- docker push --> ECR
@@ -62,15 +61,14 @@ flowchart LR
 
 ## Esteira CI/CD
 
-São três workflows em [`.github/workflows/`](.github/workflows/):
+São dois workflows em [`.github/workflows/`](.github/workflows/):
 
 | Arquivo | Quando roda | O que faz |
 |---|---|---|
-| [`ci.yml`](.github/workflows/ci.yml) | Push fora da `main` e pull request | Build da imagem |
-| [`security.yml`](.github/workflows/security.yml) | Todo push | **Gitleaks** procura segredos em todo o histórico do git; **Semgrep** faz a análise estática do código; **Trivy** barra a imagem com CVE crítico que já tem correção |
-| [`cd.yml`](.github/workflows/cd.yml) | Quando o "Security Scan" passa na `main` | `terraform apply`, push da imagem no ECR com o SHA do commit, deploy na EC2 via SSM, limpeza do cache do CloudFront e checagem da URL pública |
+| [`ci.yml`](.github/workflows/ci.yml) — CI, Build e Segurança | Push fora da `main` e pull request | **Build** da imagem; **Gitleaks** procura segredos em todo o histórico do git; **Semgrep** faz a análise estática do código; **Trivy** barra a imagem com CVE crítico que já tem correção |
+| [`cd.yml`](.github/workflows/cd.yml) — CD, Deploy para Produção | Push na `main` | `terraform apply`, push da imagem no ECR com o SHA do commit, deploy na EC2 via SSM, limpeza do cache do CloudFront e checagem da URL pública |
 
-Se o Gitleaks, o Semgrep ou o Trivy falhar, o deploy não roda: nada vai para o ar.
+O código só entra na `main` por pull request, e o pull request só é aceito com o CI verde. Se o Gitleaks, o Semgrep ou o Trivy falhar, o merge fica bloqueado e nada vai para o ar.
 
 Os segredos ficam em **Settings → Secrets and variables → Actions**, nunca no código:
 
@@ -84,9 +82,9 @@ Os segredos ficam em **Settings → Secrets and variables → Actions**, nunca n
 
 Para demonstrar o bloqueio, numa branch de teste:
 
-1. Apague a última linha `USER nginx` do `Dockerfile`. O container passa a rodar como root, o Semgrep acusa, e o "Security Scan" fica vermelho, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
+1. Apague a última linha `USER nginx` do `Dockerfile`. O container passa a rodar como root, o Semgrep acusa, e o CI fica vermelho, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
 2. Tire o print da execução vermelha.
-3. Desfaça a alteração e faça push. O "Security Scan" fica verde e, na `main`, o "Deploy do Inclui+ na AWS" roda. Tire o segundo print.
+3. Desfaça a alteração e faça push. O CI fica verde; com o merge na `main`, o CD publica. Tire o segundo print.
 
 ## Observabilidade
 
@@ -200,8 +198,8 @@ docker compose down           # para tudo
 ### 3. Publicar na AWS
 
 1. Cadastre os segredos da tabela da [Esteira CI/CD](#esteira-cicd) no GitHub.
-2. Faça push na `main`. Depois do "Security Scan", o deploy cria o bucket de estado, aplica o Terraform, publica a imagem e faz o deploy.
-3. A URL aparece no resumo da execução, em **Actions → Deploy do Inclui+ na AWS**. Na primeira vez, o CloudFront leva de 5 a 10 minutos para ficar pronto.
+2. Faça o merge na `main`. O CD cria o bucket de estado, aplica o Terraform, publica a imagem e faz o deploy.
+3. A URL aparece no resumo da execução, em **Actions → CD — Deploy para Produção**. Na primeira vez, o CloudFront leva de 5 a 10 minutos para ficar pronto.
 
 Para rodar o Terraform na sua máquina, copie `infra/terraform.tfvars.example` para `infra/terraform.tfvars` (esse arquivo fica fora do git).
 
@@ -238,7 +236,7 @@ nginx/default.conf          Cabeçalhos de segurança, cache, 404, /healthz e m�
 docker-compose.yml          Site + Prometheus, Blackbox, nginx exporter e Grafana
 observabilidade/            Configuração do Prometheus, alertas e dashboard do Grafana
 infra/                      Terraform da AWS
-.github/workflows/          ci.yml, security.yml e cd.yml
+.github/workflows/          ci.yml (build e segurança) e cd.yml (deploy)
 ```
 
 ## O que é real e o que é demonstração

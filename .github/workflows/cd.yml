@@ -1,16 +1,14 @@
-name: Deploy do Inclui+ na AWS
+name: CD — Deploy para Produção
 
-# Só publica depois que o Security Scan (Gitleaks, Semgrep e Trivy) passar na main.
-# Se alguma varredura falhar, o deploy não acontece.
+# Publica na AWS quando o código entra na main.
+# O código só chega na main por pull request, depois de passar pelo CI.
 on:
-  workflow_run:
-    workflows: [Security Scan]
-    types: [completed]
+  push:
     branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: cd-inclui
+  group: deploy-inclui
   cancel-in-progress: false
 
 env:
@@ -18,11 +16,9 @@ env:
   TF_STATE_KEY: inclui-gs/terraform.tfstate
 
 jobs:
-  entregar:
-    name: Publica o site na AWS
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+  deploy:
+    name: Terraform e Deploy (Produção)
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
