@@ -1,0 +1,95 @@
+name: Destroy — Remove a infraestrutura da AWS
+
+# Apaga tudo o que o CD criou na AWS (EC2, VPC, security group, IAM, ECR e CloudFront)
+# e depois o bucket de estado do Terraform.
+#
+# Roda sozinho uma única vez: quando este arquivo entra na main.
+# Depois disso, só roda se for disparado na mão (Actions → Run workflow).
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/destroy.yml]
+  workflow_dispatch:
+
+# Mesmo grupo do CD: nunca destrói enquanto um deploy está rodando.
+concurrency:
+  group: deploy-inclui
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-2
+  TF_STATE_KEY: inclui-gs/terraform.tfstate
+
+jobs:
+  destruir:
+    name: Destrói toda a infraestrutura AWS do projeto
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Conecta na AWS
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Descobre o bucket de estado
+        run: |
+          conta=$(aws sts get-caller-identity --query Account --output text)
+          echo "TF_STATE_BUCKET=inclui-gs-tfstate-$conta" >> "$GITHUB_ENV"
+
+      - name: Instala o Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+
+      - name: Terraform · inicializa
+        working-directory: infra
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="key=$TF_STATE_KEY" \
+            -backend-config="region=$AWS_REGION" \
+            -backend-config="use_lockfile=true"
+
+      - name: Terraform · destrói a infraestrutura
+        working-directory: infra
+        run: terraform destroy -input=false -auto-approve
+
+      - name: Esvazia e remove o bucket de estado
+        run: |
+          if aws s3api head-bucket --bucket "$TF_STATE_BUCKET" 2>/dev/null; then
+            aws s3api put-bucket-versioning \
+              --bucket "$TF_STATE_BUCKET" \
+              --versioning-configuration Status=Suspended
+
+            objetos=$(aws s3api list-object-versions --bucket "$TF_STATE_BUCKET" \
+              --output json --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}')
+            if [ "$(echo "$objetos" | jq '.Objects | length')" -gt 0 ]; then
+              aws s3api delete-objects --bucket "$TF_STATE_BUCKET" --delete "$objetos"
+            fi
+
+            marcadores=$(aws s3api list-object-versions --bucket "$TF_STATE_BUCKET" \
+              --output json --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}')
+            if [ "$(echo "$marcadores" | jq '.Objects | length')" -gt 0 ]; then
+              aws s3api delete-objects --bucket "$TF_STATE_BUCKET" --delete "$marcadores"
+            fi
+
+            aws s3api delete-bucket --bucket "$TF_STATE_BUCKET"
+            echo "Bucket de estado removido: $TF_STATE_BUCKET"
+          else
+            echo "Bucket de estado já não existe, nada a remover."
+          fi
+
+      - name: Resumo
+        run: |
+          {
+            echo "### Infraestrutura destruída"
+            echo ""
+            echo "Todos os recursos AWS do Inclui+ (EC2, VPC, security group, IAM, ECR e CloudFront) e o bucket de estado do Terraform foram removidos."
+          } >> "$GITHUB_STEP_SUMMARY"
