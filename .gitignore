@@ -21,3 +21,7 @@ crash.log
 # Variáveis locais podem conter dados da conta
 *.tfvars
 !*.tfvars.example
+
+# Chaves de acesso baixadas do console da AWS: nunca vão para o repositório.
+*accessKeys*.csv
+*credentials*.csv
