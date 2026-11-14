@@ -1,4 +1,4 @@
-name: CI
+name: Build do Inclui+
 
 on:
   pull_request:
@@ -9,12 +9,12 @@ on:
 
 jobs:
   build:
-    name: Build da imagem
+    name: Monta a imagem Docker
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - name: Build da imagem
+      - name: Monta a imagem
         run: docker build -t inclui:ci .

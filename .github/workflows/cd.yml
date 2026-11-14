@@ -1,10 +1,10 @@
-name: CD
+name: Deploy do Inclui+ na AWS
 
-# Só implanta depois que o Security Pipeline (Gitleaks, Semgrep e Trivy) passar na main.
+# Só publica depois que a Segurança do Inclui+ (Gitleaks, Semgrep e Trivy) passar na main.
 # Se alguma varredura falhar, o deploy não acontece.
 on:
   workflow_run:
-    workflows: [Security Pipeline]
+    workflows: ["Segurança do Inclui+"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -14,12 +14,12 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: us-east-2
   TF_STATE_KEY: inclui-gs/terraform.tfstate
 
 jobs:
   entregar:
-    name: Provisiona, publica e implanta
+    name: Publica o site na AWS
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
 
@@ -27,10 +27,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - name: Define a tag da imagem
+      - name: Usa o commit como versão da imagem
         run: echo "IMAGE_TAG=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: Configura credenciais AWS
+      - name: Conecta na AWS
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -41,7 +41,7 @@ jobs:
       # O runner é descartável: o estado do Terraform precisa viver no S3,
       # senão cada execução tentaria recriar a infraestrutura inteira.
       # Idempotente: cria o bucket apenas na primeira vez.
-      - name: Bootstrap do backend de estado
+      - name: Prepara o bucket do estado do Terraform
         run: |
           conta=$(aws sts get-caller-identity --query Account --output text)
           bucket="inclui-gs-tfstate-$conta"
@@ -51,7 +51,8 @@ jobs:
             echo "Bucket de estado já existe."
           else
             echo "Criando o bucket de estado."
-            aws s3api create-bucket --bucket "$bucket" --region "$AWS_REGION"
+            aws s3api create-bucket --bucket "$bucket" --region "$AWS_REGION" \
+              --create-bucket-configuration LocationConstraint="$AWS_REGION"
             aws s3api put-bucket-versioning \
               --bucket "$bucket" \
               --versioning-configuration Status=Enabled
@@ -65,13 +66,13 @@ jobs:
               '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
           fi
 
-      - name: Setup do Terraform
+      - name: Instala o Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_version: 1.13.4
           terraform_wrapper: false
 
-      - name: Terraform init
+      - name: Terraform · inicializa
         working-directory: infra
         run: |
           terraform init -input=false \
@@ -81,11 +82,11 @@ jobs:
             -backend-config="use_lockfile=true"
 
       # Na primeira execução, o CloudFront leva alguns minutos para ficar pronto.
-      - name: Terraform apply
+      - name: Terraform · cria ou atualiza a infraestrutura
         working-directory: infra
         run: terraform apply -input=false -auto-approve
 
-      - name: Lê os outputs da infraestrutura
+      - name: Lê os dados da infraestrutura criada
         working-directory: infra
         run: |
           echo "INSTANCE_ID=$(terraform output -raw instance_id)" >> "$GITHUB_ENV"
@@ -93,12 +94,12 @@ jobs:
           echo "URL_DO_SITE=$(terraform output -raw url_do_site)" >> "$GITHUB_ENV"
           echo "CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id)" >> "$GITHUB_ENV"
 
-      - name: Login no Amazon ECR
+      - name: Entra no ECR
         uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
 
       # As tags do ECR são imutáveis: cada imagem leva o SHA do commit.
       # Se o deploy for repetido para o mesmo commit, a imagem já existe e o push é pulado.
-      - name: Build e push no ECR
+      - name: Monta a imagem e envia ao ECR
         run: |
           repositorio="${ECR_URL##*/}"
           if aws ecr describe-images --repository-name "$repositorio" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
@@ -111,7 +112,7 @@ jobs:
       # A instância pode ter acabado de nascer; o agente SSM leva um tempo
       # até se registrar. Sem esta espera o send-command falha por "instância
       # não encontrada" em provisionamentos novos.
-      - name: Aguarda o agente SSM registrar a instância
+      - name: Espera a EC2 ficar pronta
         run: |
           for tentativa in $(seq 1 30); do
             estado=$(aws ssm describe-instance-information \
@@ -128,7 +129,7 @@ jobs:
           echo "::error::O agente SSM não ficou online em 5 minutos."
           exit 1
 
-      - name: Deploy na EC2 via SSM
+      - name: Atualiza o site na EC2
         run: |
           command_id=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \

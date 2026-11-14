@@ -1,4 +1,4 @@
-name: Security Pipeline
+name: Segurança do Inclui+
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   gitleaks:
-    name: Gitleaks - detecção de segredos
+    name: Gitleaks · procura senhas e chaves no código
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,7 +19,7 @@ jobs:
 
       # CLI oficial em container, versão fixa, varrendo todos os commits.
       # (A gitleaks-action quebra quando a varredura começa no primeiro commit do repositório.)
-      - name: Varredura de segredos
+      - name: Procura segredos em todo o histórico
         run: |
           docker run --rm -v "$PWD:/repo" \
             -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
@@ -27,7 +27,7 @@ jobs:
             git /repo --redact --verbose --exit-code 1
 
   semgrep:
-    name: Semgrep - análise estática de código
+    name: Semgrep · revisa o código atrás de falhas
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,20 +37,20 @@ jobs:
         run: pip install semgrep
 
       # O Leaflet é código de terceiros copiado para o projeto e fica de fora.
-      - name: Varredura de código vulnerável
+      - name: Revisa o código
         run: semgrep scan --config auto --error --exclude site/assets/vendor
 
   trivy:
-    name: Trivy - CVE crítico na imagem
+    name: Trivy · checa vulnerabilidades da imagem
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - name: Build da imagem
+      - name: Monta a imagem
         run: docker build -t inclui:security-scan .
 
-      - name: Varredura de CVEs
+      - name: Checa vulnerabilidades críticas
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: inclui:security-scan

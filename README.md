@@ -16,7 +16,7 @@ Projeto da Global Solution FIAP 2026.2. **Os locais, as notas e os descontos sã
 | Aplicação | Site estático: HTML, CSS e JavaScript puro, sem framework e sem build |
 | Container | `nginxinc/nginx-unprivileged:1.30-alpine`, usuário `nginx` (sem root), porta 8080 |
 | Registry | Amazon ECR, repositório `inclui-gs`, tags imutáveis com o SHA do commit |
-| Nuvem | AWS, região `us-east-1` |
+| Nuvem | AWS, região `us-east-2` |
 | Infraestrutura | Terraform: VPC, sub-rede pública, internet gateway, security group, IAM role, ECR, EC2 `t3.micro` e CloudFront |
 | Estado do Terraform | Bucket S3 privado, versionado e criptografado (fora do repositório) |
 | Esteira CI/CD | GitHub Actions: `ci.yml` (build), `security.yml` (Gitleaks, Semgrep e Trivy a cada push) e `cd.yml` (deploy automático na `main`) |
@@ -28,7 +28,7 @@ Projeto da Global Solution FIAP 2026.2. **Os locais, as notas e os descontos sã
 ```mermaid
 flowchart LR
     V[Visitante] -- HTTPS --> CF[CloudFront]
-    subgraph AWS us-east-1
+    subgraph AWS us-east-2
         CF -- HTTP 80 --> SG{{Security group<br/>só porta 80}}
         SG --> EC2[EC2 t3.micro<br/>Amazon Linux 2023]
         EC2 --> C[Container nginx<br/>sem root, 8080]
@@ -68,9 +68,9 @@ São três workflows em [`.github/workflows/`](.github/workflows/):
 |---|---|---|
 | [`ci.yml`](.github/workflows/ci.yml) | Push fora da `main` e pull request | Build da imagem |
 | [`security.yml`](.github/workflows/security.yml) | Todo push | **Gitleaks** procura segredos em todo o histórico do git; **Semgrep** faz a análise estática do código; **Trivy** barra a imagem com CVE crítico que já tem correção |
-| [`cd.yml`](.github/workflows/cd.yml) | Quando o Security Pipeline passa na `main` | `terraform apply`, push da imagem no ECR com o SHA do commit, deploy na EC2 via SSM, limpeza do cache do CloudFront e checagem da URL pública |
+| [`cd.yml`](.github/workflows/cd.yml) | Quando a "Segurança do Inclui+" passa na `main` | `terraform apply`, push da imagem no ECR com o SHA do commit, deploy na EC2 via SSM, limpeza do cache do CloudFront e checagem da URL pública |
 
-Se o Gitleaks, o Semgrep ou o Trivy falhar, o CD não roda: nada vai para o ar.
+Se o Gitleaks, o Semgrep ou o Trivy falhar, o deploy não roda: nada vai para o ar.
 
 Os segredos ficam em **Settings → Secrets and variables → Actions**, nunca no código:
 
@@ -84,9 +84,9 @@ Os segredos ficam em **Settings → Secrets and variables → Actions**, nunca n
 
 Para demonstrar o bloqueio, numa branch de teste:
 
-1. Apague a última linha `USER nginx` do `Dockerfile`. O container passa a rodar como root, o Semgrep acusa, e o Security Pipeline fica vermelho, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
+1. Apague a última linha `USER nginx` do `Dockerfile`. O container passa a rodar como root, o Semgrep acusa, e a "Segurança do Inclui+" fica vermelha, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
 2. Tire o print da execução vermelha.
-3. Desfaça a alteração e faça push. O Security Pipeline fica verde e, na `main`, o CD roda. Tire o segundo print.
+3. Desfaça a alteração e faça push. A "Segurança do Inclui+" fica verde e, na `main`, o "Deploy do Inclui+ na AWS" roda. Tire o segundo print.
 
 ## Observabilidade
 
@@ -152,14 +152,14 @@ O MVP não tem backend nem banco de dados. **Nenhum dado de cadastro chega à AW
 | Locais salvos, relatos e preferências de acessibilidade | `localStorage` do navegador | |
 | Conversa com o assistente | `sessionStorage` do navegador | Some ao fechar a aba |
 | Localização ("Perto de mim") | Só na memória da página | Usada para calcular distâncias e não é enviada a nenhum servidor |
-| Endereço IP de quem acessa | Log do container na EC2, em `us-east-1` (EUA) | Único dado pessoal que chega à AWS. Fica até o container ser recriado no próximo deploy |
+| Endereço IP de quem acessa | Log do container na EC2, em `us-east-2` (EUA) | Único dado pessoal que chega à AWS. Fica até o container ser recriado no próximo deploy |
 | Endereço IP de quem vê o mapa | Servidores do OpenStreetMap | O navegador baixa os blocos do mapa direto do OpenStreetMap |
 
 O usuário apaga os próprios dados pela tela de perfil ou limpando os dados do site no navegador. Numa versão com backend, os dados precisariam de base legal, consentimento específico para o dado sensível e, de preferência, hospedagem na região `sa-east-1` (São Paulo).
 
 ## Estimativa de custo
 
-Preços on-demand da AWS em `us-east-1`, com 730 horas por mês:
+Preços on-demand da AWS em `us-east-2`, com 730 horas por mês:
 
 | Recurso | Cálculo | US$/mês |
 |---|---|---|
@@ -200,8 +200,8 @@ docker compose down           # para tudo
 ### 3. Publicar na AWS
 
 1. Cadastre os segredos da tabela da [Esteira CI/CD](#esteira-cicd) no GitHub.
-2. Faça push na `main`. Depois do Security Pipeline, o CD cria o bucket de estado, aplica o Terraform, publica a imagem e faz o deploy.
-3. A URL aparece no resumo da execução, em **Actions → CD**. Na primeira vez, o CloudFront leva de 5 a 10 minutos para ficar pronto.
+2. Faça push na `main`. Depois da "Segurança do Inclui+", o deploy cria o bucket de estado, aplica o Terraform, publica a imagem e faz o deploy.
+3. A URL aparece no resumo da execução, em **Actions → Deploy do Inclui+ na AWS**. Na primeira vez, o CloudFront leva de 5 a 10 minutos para ficar pronto.
 
 Para rodar o Terraform na sua máquina, copie `infra/terraform.tfvars.example` para `infra/terraform.tfvars` (esse arquivo fica fora do git).
 
@@ -215,7 +215,7 @@ CONTA=$(aws sts get-caller-identity --query Account --output text)
 terraform init -input=false \
   -backend-config="bucket=inclui-gs-tfstate-$CONTA" \
   -backend-config="key=inclui-gs/terraform.tfstate" \
-  -backend-config="region=us-east-1" \
+  -backend-config="region=us-east-2" \
   -backend-config="use_lockfile=true"
 terraform destroy
 ```

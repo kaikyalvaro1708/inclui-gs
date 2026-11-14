@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "Regiao AWS onde a infra sera criada."
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "aws_profile" {
