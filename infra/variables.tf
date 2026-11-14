@@ -52,14 +52,4 @@ variable "container_port" {
   default     = 8080
 }
 
-variable "image_tag" {
-  description = "Tag da imagem consumida pela EC2."
-  type        = string
-  default     = "gs"
-}
 
-variable "habilitar_cloudfront" {
-  description = "Cria o CloudFront na frente da EC2. Sem ele o site fica so em HTTP e o login nao funciona (crypto.subtle exige HTTPS)."
-  type        = bool
-  default     = true
-}

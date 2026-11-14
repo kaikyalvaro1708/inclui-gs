@@ -1,82 +1,37 @@
-name: Pipeline
+name: CD
 
-# A cada push, em qualquer branch: build da imagem e as três varreduras de segurança.
-# Na main, se as três passarem, o deploy na AWS roda sozinho.
+# Só implanta depois que o Security Pipeline (Gitleaks, Semgrep e Trivy) passar na main.
+# Se alguma varredura falhar, o deploy não acontece.
 on:
-  push:
+  workflow_run:
+    workflows: [Security Pipeline]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: pipeline-${{ github.ref }}
+  group: cd-inclui
   cancel-in-progress: false
 
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  IMAGE_TAG: gs
+  AWS_REGION: us-east-1
   TF_STATE_KEY: inclui-gs/terraform.tfstate
 
 jobs:
-  gitleaks:
-    name: Gitleaks - segredos no código
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          # Histórico inteiro: um segredo apagado num commit antigo continua exposto.
-          fetch-depth: 0
-
-      - name: Varredura de segredos
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  semgrep:
-    name: Semgrep - análise estática
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Instala o Semgrep
-        run: pip install semgrep
-
-      # Cobre o JavaScript, o Dockerfile, o Terraform e o próprio workflow.
-      # O Leaflet é código de terceiros copiado para o projeto e fica de fora.
-      - name: Varredura de código vulnerável
-        run: semgrep scan --config auto --error --exclude site/assets/vendor
-
-  build-e-trivy:
-    name: Build e Trivy - CVE crítico na imagem
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build da imagem
-        run: docker build -t inclui:${{ github.sha }} .
-
-      - name: Varredura de CVEs
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: inclui:${{ github.sha }}
-          severity: CRITICAL
-          exit-code: "1"
-          ignore-unfixed: true
-
-  deploy:
-    name: Deploy na AWS
-    # Só sobe se as três varreduras passarem.
-    needs: [gitleaks, semgrep, build-e-trivy]
-    if: github.ref == 'refs/heads/main'
+  entregar:
+    name: Provisiona, publica e implanta
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Define a tag da imagem
+        run: echo "IMAGE_TAG=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Configura credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -111,7 +66,7 @@ jobs:
           fi
 
       - name: Setup do Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_version: 1.13.4
           terraform_wrapper: false
@@ -135,17 +90,23 @@ jobs:
         run: |
           echo "INSTANCE_ID=$(terraform output -raw instance_id)" >> "$GITHUB_ENV"
           echo "ECR_URL=$(terraform output -raw ecr_repository_url)" >> "$GITHUB_ENV"
-          echo "IP_PUBLICO=$(terraform output -raw ip_publico)" >> "$GITHUB_ENV"
           echo "URL_DO_SITE=$(terraform output -raw url_do_site)" >> "$GITHUB_ENV"
           echo "CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id)" >> "$GITHUB_ENV"
 
       - name: Login no Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
 
+      # As tags do ECR são imutáveis: cada imagem leva o SHA do commit.
+      # Se o deploy for repetido para o mesmo commit, a imagem já existe e o push é pulado.
       - name: Build e push no ECR
         run: |
-          docker build -t "$ECR_URL:$IMAGE_TAG" -t "$ECR_URL:$GITHUB_SHA" .
-          docker push --all-tags "$ECR_URL"
+          repositorio="${ECR_URL##*/}"
+          if aws ecr describe-images --repository-name "$repositorio" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
+            echo "Imagem $IMAGE_TAG já está no ECR."
+          else
+            docker build -t "$ECR_URL:$IMAGE_TAG" .
+            docker push "$ECR_URL:$IMAGE_TAG"
+          fi
 
       # A instância pode ter acabado de nascer; o agente SSM leva um tempo
       # até se registrar. Sem esta espera o send-command falha por "instância
@@ -172,8 +133,8 @@ jobs:
           command_id=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name AWS-RunShellScript \
-            --comment "Deploy $GITHUB_SHA" \
-            --parameters '{"commands":["cloud-init status --wait || true","/usr/local/bin/deploy.sh"]}' \
+            --comment "Deploy $IMAGE_TAG" \
+            --parameters "{\"commands\":[\"cloud-init status --wait || true\",\"/usr/local/bin/deploy.sh $IMAGE_TAG\"]}" \
             --query 'Command.CommandId' --output text)
 
           aws ssm wait command-executed \
@@ -194,7 +155,6 @@ jobs:
 
       # Os assets ficam até 1 hora no cache do CloudFront: limpa para o deploy valer já.
       - name: Limpa o cache do CloudFront
-        if: env.CLOUDFRONT_ID != ''
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "$CLOUDFRONT_ID" \
@@ -210,7 +170,6 @@ jobs:
                 echo ""
                 echo "- URL: $URL_DO_SITE"
                 echo "- Imagem: \`$ECR_URL:$IMAGE_TAG\`"
-                echo "- Commit: \`$GITHUB_SHA\`"
               } >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi

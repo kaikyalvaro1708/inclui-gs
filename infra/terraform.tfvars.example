@@ -3,4 +3,3 @@ aws_profile          = "default"
 projeto              = "inclui-gs"
 turma                = "4ESPW"
 instance_type        = "t3.micro"
-habilitar_cloudfront = true

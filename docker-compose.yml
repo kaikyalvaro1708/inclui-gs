@@ -7,6 +7,7 @@
 #   Prometheus  http://localhost:9090   (aba Alerts mostra os alertas)
 #
 # Todas as portas ficam presas em 127.0.0.1: nada disto é acessível de fora da máquina.
+# Todos os containers rodam com o sistema de arquivos só de leitura e sem ganho de privilégio.
 
 services:
   site:
@@ -27,6 +28,9 @@ services:
   # Lê o stub_status do nginx (porta 8081, interna) e entrega em formato Prometheus.
   nginx-exporter:
     image: nginx/nginx-prometheus-exporter:1.4.2
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     command:
       - --nginx.scrape-uri=http://site:8081/nginx_status
     depends_on:
@@ -36,6 +40,9 @@ services:
   # Faz requisições HTTP no site local e no publicado na AWS e mede tempo e status.
   blackbox:
     image: prom/blackbox-exporter:v0.25.0
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     command:
       - --config.file=/etc/blackbox/blackbox.yml
     volumes:
@@ -44,6 +51,9 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.2.1
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=7d
@@ -59,6 +69,11 @@ services:
 
   grafana:
     image: grafana/grafana:11.5.2
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "127.0.0.1:3000:3000"
     environment:

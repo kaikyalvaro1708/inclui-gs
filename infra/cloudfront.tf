@@ -9,9 +9,10 @@ data "aws_cloudfront_cache_policy" "otimizado" {
   name = "Managed-CachingOptimized"
 }
 
+# O certificado padrão (*.cloudfront.net) não permite escolher a versão mínima do TLS:
+# isso exige domínio próprio com certificado do ACM, fora do escopo do MVP.
+# nosemgrep: terraform.aws.security.aws-cloudfront-insecure-tls.aws-insecure-cloudfront-distribution-tls-version
 resource "aws_cloudfront_distribution" "site" {
-  count = var.habilitar_cloudfront ? 1 : 0
-
   enabled             = true
   comment             = "${local.nome} - site do Inclui+"
   default_root_object = "index.html"

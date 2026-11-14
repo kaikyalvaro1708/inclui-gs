@@ -11,15 +11,15 @@ Projeto da Global Solution FIAP 2026.2. **Os locais, as notas e os descontos sã
 | Projeto | Inclui+ |
 | Turma | 4ESPW |
 | Integrantes | Nome Completo (RM00000) · Nome Completo (RM00000) · Nome Completo (RM00000) |
-| URL pública | `https://SEU-ID.cloudfront.net` (aparece no resumo de cada execução do pipeline) |
+| URL pública | `https://SEU-ID.cloudfront.net` (aparece no resumo de cada execução da esteira CI/CD) |
 | Repositório | https://github.com/kaikyalvaro1708/inclui-gs |
 | Aplicação | Site estático: HTML, CSS e JavaScript puro, sem framework e sem build |
-| Container | `nginxinc/nginx-unprivileged:1.28-alpine`, usuário `nginx` (sem root), porta 8080 |
-| Registry | Amazon ECR, repositório `inclui-gs`, tags `gs` e SHA do commit |
+| Container | `nginxinc/nginx-unprivileged:1.30-alpine`, usuário `nginx` (sem root), porta 8080 |
+| Registry | Amazon ECR, repositório `inclui-gs`, tags imutáveis com o SHA do commit |
 | Nuvem | AWS, região `us-east-1` |
 | Infraestrutura | Terraform: VPC, sub-rede pública, internet gateway, security group, IAM role, ECR, EC2 `t3.micro` e CloudFront |
 | Estado do Terraform | Bucket S3 privado, versionado e criptografado (fora do repositório) |
-| Pipeline | GitHub Actions: build, Gitleaks, Semgrep e Trivy a cada push; deploy automático na `main` |
+| Esteira CI/CD | GitHub Actions: `ci.yml` (build), `security.yml` (Gitleaks, Semgrep e Trivy a cada push) e `cd.yml` (deploy automático na `main`) |
 | Observabilidade | Prometheus, Blackbox Exporter, nginx exporter e Grafana via `docker compose` |
 | Custo estimado | Cerca de US$ 12 por mês com a infraestrutura ligada ([detalhes](#estimativa-de-custo)) |
 
@@ -35,9 +35,14 @@ flowchart LR
         ECR[(Amazon ECR)] -. pull via IAM role .-> EC2
         S3[(S3<br/>estado do Terraform)]
     end
-    subgraph GitHub Actions
-        B[Build] --> GL[Gitleaks] & SG2[Semgrep] & T[Trivy]
-        GL & SG2 & T --> D[Deploy]
+    subgraph "GitHub Actions - esteira CI/CD"
+        CI[ci.yml<br/>Build]
+        subgraph security.yml
+            GL[Gitleaks]
+            SG2[Semgrep]
+            T[Trivy]
+        end
+        GL & SG2 & T -- passou na main --> D[cd.yml<br/>Deploy]
     end
     D -- terraform apply --> S3
     D -- docker push --> ECR
@@ -55,16 +60,17 @@ flowchart LR
 - **nginx**: cabeçalhos de segurança (CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS) e `server_tokens off`.
 - **HTTPS**: o CloudFront entrega o site em HTTPS sem domínio próprio. É necessário porque o login usa `crypto.subtle`, que o navegador só libera em HTTPS.
 
-## Pipeline
+## Esteira CI/CD
 
-Um único workflow, [`.github/workflows/pipeline.yml`](.github/workflows/pipeline.yml), roda a cada push:
+São três workflows em [`.github/workflows/`](.github/workflows/):
 
-| Job | O que faz | Barra o deploy quando |
+| Arquivo | Quando roda | O que faz |
 |---|---|---|
-| Gitleaks | Procura segredos em todo o histórico do git | Encontra chave, token ou senha |
-| Semgrep | Análise estática do JavaScript, do Dockerfile, do Terraform e do workflow | Encontra código vulnerável |
-| Build e Trivy | Faz o build da imagem e procura CVEs | A imagem tem CVE crítico com correção disponível |
-| Deploy | Só na `main` e só se os três acima passarem: `terraform apply`, push no ECR, deploy na EC2 via SSM, limpeza do cache do CloudFront e checagem da URL pública | — |
+| [`ci.yml`](.github/workflows/ci.yml) | Push fora da `main` e pull request | Build da imagem |
+| [`security.yml`](.github/workflows/security.yml) | Todo push | **Gitleaks** procura segredos em todo o histórico do git; **Semgrep** faz a análise estática do código; **Trivy** barra a imagem com CVE crítico que já tem correção |
+| [`cd.yml`](.github/workflows/cd.yml) | Quando o Security Pipeline passa na `main` | `terraform apply`, push da imagem no ECR com o SHA do commit, deploy na EC2 via SSM, limpeza do cache do CloudFront e checagem da URL pública |
+
+Se o Gitleaks, o Semgrep ou o Trivy falhar, o CD não roda: nada vai para o ar.
 
 Os segredos ficam em **Settings → Secrets and variables → Actions**, nunca no código:
 
@@ -73,15 +79,14 @@ Os segredos ficam em **Settings → Secrets and variables → Actions**, nunca n
 | `AWS_ACCESS_KEY_ID` | Credencial da AWS |
 | `AWS_SECRET_ACCESS_KEY` | Credencial da AWS |
 | `AWS_SESSION_TOKEN` | Só para credenciais temporárias, como as do AWS Academy |
-| `AWS_REGION` | `us-east-1` |
 
 ### Execução barrada e execução corrigida
 
 Para demonstrar o bloqueio, numa branch de teste:
 
-1. Apague a linha `USER nginx` do `Dockerfile`. O Semgrep acusa o Dockerfile sem usuário definido, e o pipeline fica vermelho, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
+1. Apague a última linha `USER nginx` do `Dockerfile`. O container passa a rodar como root, o Semgrep acusa, e o Security Pipeline fica vermelho, sem deploy. Outra opção: troque a imagem base por uma versão antiga, como `nginx:1.18`, e o Trivy barra pelos CVEs críticos.
 2. Tire o print da execução vermelha.
-3. Desfaça a alteração e faça push. O pipeline fica verde. Tire o segundo print.
+3. Desfaça a alteração e faça push. O Security Pipeline fica verde e, na `main`, o CD roda. Tire o segundo print.
 
 ## Observabilidade
 
@@ -132,7 +137,7 @@ docker compose start site    # o alerta volta ao normal
 | Imagem do container e suas dependências (varredura com Trivy) | | ✅ |
 | Código do site (varredura com Semgrep) | | ✅ |
 | Security group, IAM role e configuração da rede (Terraform) | | ✅ |
-| Segredos do pipeline (GitHub Secrets, varredura com Gitleaks) | | ✅ |
+| Segredos da esteira (GitHub Secrets, varredura com Gitleaks) | | ✅ |
 | Dados pessoais dos usuários | | ✅ |
 
 ## LGPD: onde ficam os dados pessoais
@@ -160,12 +165,12 @@ Preços on-demand da AWS em `us-east-1`, com 730 horas por mês:
 |---|---|---|
 | EC2 `t3.micro` | 730 h × US$ 0,0104 | 7,59 |
 | IP público IPv4 | 730 h × US$ 0,005 | 3,65 |
-| Disco EBS gp3 de 10 GB | 10 GB × US$ 0,08 | 0,80 |
+| Disco EBS gp3 de 8 GB (padrão) | 8 GB × US$ 0,08 | 0,64 |
 | ECR | Menos de 0,1 GB de imagens × US$ 0,10 | 0,01 |
 | CloudFront | Dentro do nível gratuito permanente (1 TB e 10 milhões de requisições por mês) | 0,00 |
 | S3 do estado do Terraform | Alguns KB | 0,01 |
 | SSM e transferência da EC2 para o CloudFront | Sem custo | 0,00 |
-| **Total** | | **≈ 12,06** |
+| **Total** | | **≈ 11,90** |
 
 Isso dá cerca de US$ 0,40 por dia. Com o nível gratuito da AWS ou os créditos do AWS Academy, o custo é zero. O GitHub Actions é gratuito em repositório público, e a observabilidade roda na máquina local, sem custo. Depois da avaliação, destrua tudo (veja abaixo).
 
@@ -194,9 +199,9 @@ docker compose down           # para tudo
 
 ### 3. Publicar na AWS
 
-1. Cadastre os segredos da tabela [Pipeline](#pipeline) no GitHub.
-2. Faça push na `main`. O pipeline cria o bucket de estado, aplica o Terraform, publica a imagem e faz o deploy.
-3. A URL aparece no resumo da execução, em **Actions → Pipeline → Deploy na AWS**. Na primeira vez, o CloudFront leva de 5 a 10 minutos para ficar pronto.
+1. Cadastre os segredos da tabela da [Esteira CI/CD](#esteira-cicd) no GitHub.
+2. Faça push na `main`. Depois do Security Pipeline, o CD cria o bucket de estado, aplica o Terraform, publica a imagem e faz o deploy.
+3. A URL aparece no resumo da execução, em **Actions → CD**. Na primeira vez, o CloudFront leva de 5 a 10 minutos para ficar pronto.
 
 Para rodar o Terraform na sua máquina, copie `infra/terraform.tfvars.example` para `infra/terraform.tfvars` (esse arquivo fica fora do git).
 
@@ -233,7 +238,7 @@ nginx/default.conf          Cabeçalhos de segurança, cache, 404, /healthz e m�
 docker-compose.yml          Site + Prometheus, Blackbox, nginx exporter e Grafana
 observabilidade/            Configuração do Prometheus, alertas e dashboard do Grafana
 infra/                      Terraform da AWS
-.github/workflows/          pipeline.yml
+.github/workflows/          ci.yml, security.yml e cd.yml
 ```
 
 ## O que é real e o que é demonstração
