@@ -2,9 +2,12 @@ name: CD — Deploy para Produção
 
 # Publica na AWS quando o código entra na main.
 # O código só chega na main por pull request, depois de passar pelo CI.
+#
+# PAUSADO: o deploy automático está desligado enquanto a infraestrutura é destruída
+# (destroy.yml). Para religar, descomente as duas linhas do push abaixo.
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 concurrency:
