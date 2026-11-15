@@ -8,17 +8,30 @@ Projeto da Global Solution FIAP 2026.2. **Os locais, as notas e os descontos sã
 
 | Item | Valor |
 |---|---|
-| Projeto | Inclui+ |
-| Turma | 4ESPW |
-| Integrantes | Nome Completo (RM00000) · Nome Completo (RM00000) · Nome Completo (RM00000) |
-| URL pública | https://d3ls3zp8wqbtsw.cloudfront.net |
+| Nome do produto | Inclui+ |
+| Equipe | Turma 4ESPW — Kaiky Alvaro de Miranda (RM98118) · Bruno Eduardo Caputo Paulino (RM558303) · Juan Pinheiro de França (RM552202) · Lucas Rodrigues da Silva (RM98344) |
+| Cidadão e território | Pessoas com deficiência de mobilidade, visão, audição e cognição, seus acompanhantes e pessoas idosas, na cidade de São Paulo |
+| Problema, em uma frase | "Acessível" não diz nada: a pessoa descobre a barreira só quando já chegou na porta |
+| Proposta de valor | Uma nota separada por necessidade, com evidência em foto e a lista do que falta em cada local, para decidir antes de sair de casa |
+| Arquitetura: componentes | Site estático (HTML, CSS e JavaScript, sem framework) → container nginx sem root → Amazon ECR → EC2 → CloudFront em HTTPS. Esteira em GitHub Actions e observabilidade com Prometheus, Blackbox Exporter e Grafana |
+| Fontes de dados | 20 locais fictícios em [`places.js`](site/assets/js/data/places.js): bairros e coordenadas reais de São Paulo, com recursos e notas simulados para demonstração. Os blocos do mapa vêm do OpenStreetMap |
+| Modelos de IA utilizados | Nenhum neste componente. O assistente responde por regras e palavras-chave no próprio navegador ([`concierge.js`](site/assets/js/data/concierge.js)), sem modelo de linguagem. A verificação de fotos por IA é um próximo passo |
+| URL do MVP | https://d3ls3zp8wqbtsw.cloudfront.net |
 | Repositório | https://github.com/kaikyalvaro1708/inclui-gs |
+| Indicadores de impacto | Locais com nota publicada por necessidade (hoje 20); parcela das buscas que terminam em um local com nota 4 ou mais para a necessidade declarada; relatos enviados por quem visitou o local; recursos que o local passou a oferecer depois de aparecer na lista "o que falta" |
+| ODS conectados | 2, 3, 4, 9, 10 e 11 — detalhados na [página Sobre](site/sobre.html) e na seção [Conexão com os ODS](#conexão-com-os-ods) |
+
+### Componente de Produção (Secure DevOps & Cloud Computing)
+
+| Item | Valor |
+|---|---|
 | Aplicação | Site estático: HTML, CSS e JavaScript puro, sem framework e sem build |
 | Container | `nginxinc/nginx-unprivileged:1.30-alpine`, usuário `nginx` (sem root), porta 8080 |
 | Registry | Amazon ECR, repositório `inclui-gs`, tags imutáveis com o SHA do commit |
 | Nuvem | AWS, região `us-east-2` |
 | Infraestrutura | Terraform: VPC, sub-rede pública, internet gateway, security group, IAM role, ECR, EC2 `t3.micro` e CloudFront |
 | Estado do Terraform | Bucket S3 privado, versionado e criptografado (fora do repositório) |
+| Porta administrativa | Não existe. O security group libera só a porta 80; o acesso à EC2 é por AWS Systems Manager (SSM), sem SSH |
 | Esteira CI/CD | GitHub Actions: [`ci.yml`](.github/workflows/ci.yml) (build, Gitleaks, Semgrep e Trivy) e [`cd.yml`](.github/workflows/cd.yml) (deploy na `main`) |
 | Observabilidade | Prometheus, Blackbox Exporter, nginx exporter e Grafana via `docker compose` |
 | Custo estimado | Cerca de US$ 12 por mês com a infraestrutura ligada ([detalhes](#estimativa-de-custo)) |
@@ -154,6 +167,21 @@ O MVP não tem backend nem banco de dados. **Nenhum dado de cadastro chega à AW
 | Endereço IP de quem vê o mapa | Servidores do OpenStreetMap | O navegador baixa os blocos do mapa direto do OpenStreetMap |
 
 O usuário apaga os próprios dados pela tela de perfil ou limpando os dados do site no navegador. Numa versão com backend, os dados precisariam de base legal, consentimento específico para o dado sensível e, de preferência, hospedagem na região `sa-east-1` (São Paulo).
+
+## Conexão com os ODS
+
+A Agenda 2030 trata acessibilidade como condição para várias metas, não como um tema à parte. O Inclui+ se conecta a seis objetivos:
+
+| ODS | Como o Inclui+ contribui |
+|---|---|
+| **2** · Fome zero e agricultura sustentável | Mercados e restaurantes em que todos conseguem entrar, escolher e comer |
+| **3** · Saúde e bem-estar | Clínicas e academias com estrutura e atendimento preparados para quem tem deficiência |
+| **4** · Educação de qualidade | Escolas, cursos e bibliotecas com recursos reais de acesso, e não só com a palavra "acessível" |
+| **9** · Indústria, inovação e infraestrutura | Tecnologia aplicada a um problema de infraestrutura urbana, com dados abertos sobre barreiras |
+| **10** · Redução das desigualdades | Mais autonomia para circular, consumir e participar sem depender de informação de terceiros |
+| **11** · Cidades e comunidades sustentáveis | Mapa público de onde as barreiras da cidade ainda estão, útil para o cidadão e para o poder público |
+
+A meta mais direta é a **11.2**, que pede transporte e espaços públicos acessíveis com atenção especial a pessoas com deficiência. O produto ataca a ponta que falta: saber, antes de sair de casa, se o lugar funciona para a sua necessidade.
 
 ## Estimativa de custo
 
