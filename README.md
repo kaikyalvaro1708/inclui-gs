@@ -11,7 +11,7 @@ Projeto da Global Solution FIAP 2026.2. **Os locais, as notas e os descontos sã
 | Projeto | Inclui+ |
 | Turma | 4ESPW |
 | Integrantes | Nome Completo (RM00000) · Nome Completo (RM00000) · Nome Completo (RM00000) |
-| URL pública | `https://SEU-ID.cloudfront.net` (aparece no resumo de cada execução da esteira CI/CD) |
+| URL pública | https://d3ls3zp8wqbtsw.cloudfront.net |
 | Repositório | https://github.com/kaikyalvaro1708/inclui-gs |
 | Aplicação | Site estático: HTML, CSS e JavaScript puro, sem framework e sem build |
 | Container | `nginxinc/nginx-unprivileged:1.30-alpine`, usuário `nginx` (sem root), porta 8080 |
@@ -100,7 +100,7 @@ docker compose up -d --build
 | http://localhost:3000 | Grafana, já com o dashboard **Inclui+ - Golden Signals** |
 | http://localhost:9090/alerts | Alertas do Prometheus |
 
-Depois do primeiro deploy, coloque a URL do CloudFront em [`observabilidade/prometheus/alvos.yml`](observabilidade/prometheus/alvos.yml), no lugar de `SEU-ID.cloudfront.net`. O Prometheus relê o arquivo sozinho. Enquanto a URL não for trocada, o alerta `SiteFora` do ambiente `publicado` fica disparado.
+A URL pública já está em [`observabilidade/prometheus/alvos.yml`](observabilidade/prometheus/alvos.yml). Se o CloudFront for recriado com outro endereço, troque a URL ali; o Prometheus relê o arquivo sozinho.
 
 **Os quatro golden signals no dashboard:**
 
