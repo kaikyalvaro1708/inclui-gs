@@ -12,7 +12,6 @@ RUN apk upgrade --no-cache
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --chown=nginx:nginx site/ /usr/share/nginx/html/
 
-USER nginx
 
 EXPOSE 8080
 
