@@ -37,7 +37,7 @@ variable "subnet_cidr" {
 variable "instance_type" {
   description = "Tipo da instancia EC2."
   type        = string
-  default     = "t3.micro"
+  default     = "t3.nano"
 }
 
 variable "container_name" {

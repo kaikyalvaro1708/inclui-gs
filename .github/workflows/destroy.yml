@@ -3,12 +3,13 @@ name: Destroy — Remove a infraestrutura da AWS
 # Apaga tudo o que o CD criou na AWS (EC2, VPC, security group, IAM, ECR e CloudFront)
 # e depois o bucket de estado do Terraform.
 #
-# Roda sozinho uma única vez: quando este arquivo entra na main.
-# Depois disso, só roda se for disparado na mão (Actions → Run workflow).
+# PAUSADO: só roda se for disparado na mão (Actions → Destroy → Run workflow).
+# Para destruir tudo automaticamente ao entrar na main, descomente as três linhas do push.
+# Antes de destruir, pause o CD (comente o push do cd.yml), senão o próximo merge recria tudo.
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/destroy.yml]
+  # push:
+  #   branches: [main]
+  #   paths: [.github/workflows/destroy.yml]
   workflow_dispatch:
 
 # Mesmo grupo do CD: nunca destrói enquanto um deploy está rodando.

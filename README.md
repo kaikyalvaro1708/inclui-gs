@@ -17,7 +17,7 @@ Projeto da Global Solution FIAP 2026.2. **Os locais, as notas e os descontos sã
 | Container | `nginxinc/nginx-unprivileged:1.30-alpine`, usuário `nginx` (sem root), porta 8080 |
 | Registry | Amazon ECR, repositório `inclui-gs`, tags imutáveis com o SHA do commit |
 | Nuvem | AWS, região `us-east-2` |
-| Infraestrutura | Terraform: VPC, sub-rede pública, internet gateway, security group, IAM role, ECR, EC2 `t3.micro` e CloudFront |
+| Infraestrutura | Terraform: VPC, sub-rede pública, internet gateway, security group, IAM role, ECR, EC2 `t3.nano` e CloudFront |
 | Estado do Terraform | Bucket S3 privado, versionado e criptografado (fora do repositório) |
 | Esteira CI/CD | GitHub Actions: [`ci.yml`](.github/workflows/ci.yml) (build, Gitleaks, Semgrep e Trivy) e [`cd.yml`](.github/workflows/cd.yml) (deploy na `main`) |
 | Observabilidade | Prometheus, Blackbox Exporter, nginx exporter e Grafana via `docker compose` |
@@ -30,7 +30,7 @@ flowchart LR
     V[Visitante] -- HTTPS --> CF[CloudFront]
     subgraph AWS us-east-2
         CF -- HTTP 80 --> SG{{Security group<br/>só porta 80}}
-        SG --> EC2[EC2 t3.micro<br/>Amazon Linux 2023]
+        SG --> EC2[EC2 t3.nano<br/>Amazon Linux 2023]
         EC2 --> C[Container nginx<br/>sem root, 8080]
         ECR[(Amazon ECR)] -. pull via IAM role .-> EC2
         S3[(S3<br/>estado do Terraform)]
@@ -161,16 +161,16 @@ Preços on-demand da AWS em `us-east-2`, com 730 horas por mês:
 
 | Recurso | Cálculo | US$/mês |
 |---|---|---|
-| EC2 `t3.micro` | 730 h × US$ 0,0104 | 7,59 |
+| EC2 `t3.nano` | 730 h × US$ 0,0052 | 3,80 |
 | IP público IPv4 | 730 h × US$ 0,005 | 3,65 |
 | Disco EBS gp3 de 8 GB (padrão) | 8 GB × US$ 0,08 | 0,64 |
 | ECR | Menos de 0,1 GB de imagens × US$ 0,10 | 0,01 |
 | CloudFront | Dentro do nível gratuito permanente (1 TB e 10 milhões de requisições por mês) | 0,00 |
 | S3 do estado do Terraform | Alguns KB | 0,01 |
 | SSM e transferência da EC2 para o CloudFront | Sem custo | 0,00 |
-| **Total** | | **≈ 11,90** |
+| **Total** | | **≈ 8,10** |
 
-Isso dá cerca de US$ 0,40 por dia. Com o nível gratuito da AWS ou os créditos do AWS Academy, o custo é zero. O GitHub Actions é gratuito em repositório público, e a observabilidade roda na máquina local, sem custo. Depois da avaliação, destrua tudo (veja abaixo).
+Isso dá cerca de US$ 0,27 por dia. Com o nível gratuito da AWS ou os créditos do AWS Academy, o custo é zero. O GitHub Actions é gratuito em repositório público, e a observabilidade roda na máquina local, sem custo. Depois da avaliação, destrua tudo (veja abaixo).
 
 ## Como reproduzir
 
