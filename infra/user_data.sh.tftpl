@@ -20,6 +20,13 @@ docker image prune -af
 SCRIPT
 chmod +x /usr/local/bin/deploy.sh
 
+# Área de troca de 1 GB: o dnf trava em máquinas com pouca memória.
+fallocate -l 1G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
 dnf install -y docker
 systemctl enable --now docker
 usermod -aG docker ec2-user
