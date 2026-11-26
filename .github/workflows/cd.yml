@@ -3,8 +3,10 @@ name: CD — Deploy para Produção
 # Publica na AWS quando o código entra na main.
 # O código só chega na main por pull request, depois de passar pelo CI.
 on:
-  push:
-    branches: [main]
+  # PAUSADO: se o CD rodar, ele recria toda a infraestrutura que o Destroy apagou.
+  # Para religar, descomente as duas linhas do push.
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 concurrency:

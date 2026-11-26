@@ -2,10 +2,12 @@ name: CI — Build e Segurança
 
 # Testa tudo antes de chegar na main: build da imagem, Gitleaks, Semgrep e Trivy.
 on:
-  push:
-    branches-ignore: [main]
-  pull_request:
-    branches: [main]
+  # PAUSADO: projeto entregue e infraestrutura sendo removida.
+  # Para religar, descomente os quatro blocos de push e pull_request abaixo.
+  # push:
+  #   branches-ignore: [main]
+  # pull_request:
+  #   branches: [main]
   workflow_dispatch:
 
 jobs:
